@@ -5,15 +5,50 @@ import uuid
 
 from log import log
 
+LINE_PADDING = 2
+ERROR_HEADER = re.compile(r"(.+):(\d+): (.+)$")
+
 class CompileError(object):
 
-  def __init__(self, file=None, line=None, col=None, short=None, long=None, code=None):
+  def __init__(self, file=None, line=-1, col=-1, short=None, long=None, code=None):
     self.file = file
     self.line = line
     self.col = col
     self.short = short
     self.long = long
     self.code = code
+
+  def jump_to(self):
+    # TODO
+    pass
+
+def parse_chunk(lines):
+  log("parse_chunk", lines=lines)
+  n = len(lines)
+  mo = re.match(ERROR_HEADER, lines[0])
+  if not mo:
+    return None
+  file = mo.group(1)
+  line = int(mo.group(2))
+  short = mo.group(3).strip()
+  long = None
+  code = None
+  col = None
+  if lines[-1].strip() == "^" and n >= 3:
+    code = lines[-2].strip()
+    col = lines[-1].index("^") - LINE_PADDING + 1
+    last_long_index = -3
+  else:
+    last_long_index = -1
+  if abs(last_long_index) < n:
+    long = "".join(lines[1, last_long_index])
+  return CompileError(
+      file=file,
+      line=line,
+      col=col,
+      short=short,
+      long=long,
+      code=code)
 
 def strip_error_tag(line):
   return line[len("[error] "):]
@@ -94,11 +129,23 @@ class Sbt(object):
 
   def compile(self):
     lines = map(strip_error_tag, filter(line_is_error, self.command("compile")))
-    log("ERRORS:")
-    for line in lines:
-      log(line)
-    log("END.")
+    if len(lines) == 0:
+      return []
+    lines.reverse()
+    chunks = []
+    chunk = [lines.pop()]
+    while len(lines) > 0:
+      if lines[-1][0] == ' ':
+        chunk.append(lines.pop())
+      else:
+        chunks.append(chunk)
+        line = lines.pop()
+        if line[0] != '/':
+          break
+        chunk = [line]
+    return map(parse_chunk, chunks)
 
   def test(self):
-    pass
+    # TODO
+    return []
 

@@ -6,12 +6,34 @@ import sys
 from log import log
 import sbt
 
+HELP      = 1
+ERROR     = 2
+NO_ERRORS = 3
+
+HELP_TEXT = """
+    c  Compile          h  Next             e  Editor
+    u  Test             t  Previous
+    ?  Help             ^  First
+    q  Quit             $  Last
+"""
+
+HAPPY = """
+     ***   ***
+      *     *
+
+         >
+
+   \~~~~~~~~~~~/
+    \~~~~~~~~~/
+"""
+
 class Display(object):
 
   def __init__(self, sbt):
     log("init display", sbt=sbt)
     self.sbt = sbt
     self.next_color_pair = 1
+    self.content_mode = HELP
 
   def handle_signal(self, sig, stack):
     if sig == signal.SIGTERM:
@@ -38,15 +60,20 @@ class Display(object):
     self.title_bar = self.root.subwin(1, w, 0, 0)
     self.init_title_bar()
     self.status_bar = self.root.subwin(1, w, h - 1, 0)
-    status_color = self.alloc_color_pair(curses.COLOR_BLACK, curses.COLOR_GREEN)
-    self.status_bar.bkgdset(' ', status_color)
-    self.status_bar.clear()
-    self.status_bar.insstr(0, 1, "0 errors")
+    self.status_color_good = self.alloc_color_pair(
+        curses.COLOR_BLACK, curses.COLOR_GREEN)
+    self.status_color_neutral = self.alloc_color_pair(
+        curses.COLOR_WHITE, curses.COLOR_BLACK)
+    self.status_color_bad = self.alloc_color_pair(
+        curses.COLOR_WHITE, curses.COLOR_RED) | curses.A_BOLD
     # Make a window for the main content area
     self.content = self.root.subpad(h - 2, w, 1, 0)
-    main_color = self.alloc_color_pair(curses.COLOR_BLACK, curses.COLOR_WHITE)
-    self.content.bkgdset(' ', main_color)
-    self.content.clear()
+    self.content_color_help = self.alloc_color_pair(
+        curses.COLOR_BLACK, curses.COLOR_WHITE)
+    self.content_color_data = self.alloc_color_pair(
+        curses.COLOR_BLACK, curses.COLOR_WHITE)
+    # Display the default content
+    self.refresh()
     return self
 
   def __exit__(self, type, value, traceback):
@@ -71,12 +98,92 @@ class Display(object):
         self.sbt.project_info['sbt_ver'], self.sbt.project_info['scala_ver'])
     self.title_bar.insstr(0, w - len(ver_str), ver_str)
 
-  def run(self, handle_key):
+  def run(self, control):
     try:
       ch = self.root.getch()
       while ch >= 0:
-        handle_key(ch, curses.keyname(ch))
+        control.handle_key(ch, curses.keyname(ch))
         ch = self.root.getch()
     except KeyboardInterrupt:
       pass
+
+  def set_errors(self, errors):
+    self.errors = errors
+    if len(errors) > 0:
+      self.error_index = 0
+      self.content_mode = ERROR
+    else:
+      self.error_index = None
+      self.content_mode = NO_ERRORS
+    self.refresh()
+
+  def show_help(self):
+    self.content_mode = HELP
+    self.refresh()
+
+  def next_error(self):
+    if self.content_mode == ERROR:
+      self.error_index += 1
+      if self.error_index == len(self.errors):
+        self.error_index = 0
+      self.refresh()
+
+  def previous_error(self):
+    if self.content_mode == ERROR:
+      self.error_index -= 1
+      if self.error_index < 0:
+        self.error_index = len(self.errors) - 1
+      self.refresh()
+
+  def first_error(self):
+    if self.content_mode == ERROR:
+      self.error_index = 0
+      self.refresh()
+
+  def last_error(self):
+    if self.content_mode == ERROR:
+      self.error_index = len(self.errors)
+      self.refresh()
+
+  def set_colors(self, status, content):
+    self.status_bar.bkgdset(' ', status)
+    self.content.bkgdset(' ', content)
+    self.status_bar.clear()
+    self.content.clear()
+
+  def current_error(self):
+    if self.content_mode == ERROR:
+      return self.errors[self.error_index]
+    else:
+      return None
+
+  def refresh(self):
+    if self.content_mode == HELP:
+      self.set_colors(self.status_color_neutral, self.content_color_help)
+      self.status_bar.insstr(0, 1, "Help")
+      self.content.insstr(0, 0, HELP_TEXT)
+    elif self.content_mode == ERROR:
+      self.set_colors(self.status_color_bad, self.content_color_data)
+      self.status_bar.insstr(0, 1, "%d errors" % len(self.errors))
+      err = self.current_error()
+      c = self.content
+      c.insstr(1, 0, "%s" % err.file)
+      if err.line and err.col:
+        c.insstr(2, 0, "Line %d, Column %d" % (err.line, err.col))
+      elif err.line:
+        c.insstr(2, 0, "Line %d" % err.line)
+      c.insstr(4, 0, "%s" % err.short)
+      if err.long:
+        c.insstr(6, 0, "%s" % err.long)
+      (y, _) = c.getyx()
+      c.insstr(y + 2, 4, "%s" % err.code)
+      if err.code and err.col > 0:
+        log("showing column pointer", y=y+2, x=err.col-1)
+        c.insstr(y + 3, err.col + 3, "^")
+    elif self.content_mode == NO_ERRORS:
+      self.set_colors(self.status_color_good, self.content_color_data)
+      self.status_bar.insstr(0, 1, "0 errors")
+      self.content.insstr(4, 0, HAPPY)
+    self.status_bar.refresh()
+    self.content.refresh()
 

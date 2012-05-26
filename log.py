@@ -24,7 +24,7 @@ def log(*stuff, **kv):
       out.write("\n")
     if len(kv) > 0:
       for k in kv:
-        out.write("    %s: %r\n" % (k, kv[k]))
+        out.write("    %s: %s\n" % (k, str(kv[k])))
     out.flush()
 
 def cleanup():

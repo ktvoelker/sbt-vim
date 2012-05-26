@@ -11,7 +11,7 @@ try:
   log.init()
   with sbt.Sbt() as sbt:
     with display.Display(sbt) as display:
-      display.run(control.handle_key)
+      display.run(control.Control(display=display, sbt=sbt))
 finally:
   log.cleanup()
 
