@@ -1,0 +1,18 @@
+#!/usr/bin/env python
+
+import control
+import display
+import sbt
+
+import sys
+
+try:
+  sbt.init()
+  try:
+    display.init()
+    display.run(control.handle_key)
+  finally:
+    display.cleanup()
+finally:
+  sbt.cleanup()
+
