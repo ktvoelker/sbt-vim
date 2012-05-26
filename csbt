@@ -9,15 +9,9 @@ import sys
 
 try:
   log.init()
-  try:
-    sbt.init()
-    try:
-      display.init()
+  with sbt.Sbt() as sbt:
+    with display.Display(sbt) as display:
       display.run(control.handle_key)
-    finally:
-      display.cleanup()
-  finally:
-    sbt.cleanup()
 finally:
   log.cleanup()
 
