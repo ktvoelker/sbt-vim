@@ -3,6 +3,9 @@ import curses
 import signal
 import sys
 
+from log import log
+import sbt
+
 next_color_pair = 1
 def alloc_color_pair(fg, bg):
   global next_color_pair
@@ -17,6 +20,18 @@ def handle_signal(sig, stack):
     sys.exit(0)
   else:
     sys.exit(1)
+
+def init_title_bar():
+  title_color = alloc_color_pair(curses.COLOR_WHITE, curses.COLOR_BLUE)
+  title_bar.bkgdset(' ', title_color)
+  title_bar.clear()
+  (h, w) = title_bar.getmaxyx()
+  title_bar.addstr(" csbt 0.0.1    ")
+  log(pi=sbt.project_info)
+  title_bar.addstr("%s" % sbt.project_info['name'], curses.A_BOLD)
+  ver_str = "sbt %s    scala %s " % (
+      sbt.project_info['sbt_ver'], sbt.project_info['scala_ver'])
+  title_bar.insstr(0, w - len(ver_str), ver_str)
 
 def init():
   global root, title_bar, status_bar, content
@@ -36,13 +51,9 @@ def init():
   (h, w) = root.getmaxyx()
   # Make windows for the top and bottom bars
   title_bar = root.subwin(1, w, 0, 0)
-  title_color = alloc_color_pair(curses.COLOR_WHITE, curses.COLOR_BLUE)
-  title_bar.bkgdset(' ', curses.A_BOLD | title_color)
-  title_bar.clear()
-  # TODO put sbt version in title bar
-  title_bar.insstr(0, 1, "csbt")
+  init_title_bar()
   status_bar = root.subwin(1, w, h - 1, 0)
-  status_color = title_color
+  status_color = alloc_color_pair(curses.COLOR_BLACK, curses.COLOR_GREEN)
   status_bar.bkgdset(' ', status_color)
   status_bar.clear()
   status_bar.insstr(0, 1, "0 errors")

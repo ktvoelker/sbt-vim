@@ -2,17 +2,22 @@
 
 import control
 import display
+import log
 import sbt
 
 import sys
 
 try:
-  sbt.init()
+  log.init()
   try:
-    display.init()
-    display.run(control.handle_key)
+    sbt.init()
+    try:
+      display.init()
+      display.run(control.handle_key)
+    finally:
+      display.cleanup()
   finally:
-    display.cleanup()
+    sbt.cleanup()
 finally:
-  sbt.cleanup()
+  log.cleanup()
 
