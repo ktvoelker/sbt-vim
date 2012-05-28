@@ -1,4 +1,6 @@
 
+# TODO add copyright header
+
 import re
 import subprocess
 import uuid
@@ -45,15 +47,18 @@ class SBT(object):
         vim.command("bprevious")
 
   def _init_buffer(self):
+    # TODO figure out if the user deleted this buffer
     if not self.buffer:
       self.buffer = SBT.Buffer()
       vim.command("setlocal buftype=nofile")
       vim.command("setlocal bufhidden=hide")
       vim.command("setlocal noswapfile")
       vim.command("setlocal nobuflisted")
+      # TODO name the buffer
       self.buffer.go_previous()
 
   def _init_test_buffer(self):
+    # TODO figure out if the user deleted this buffer
     if not self.test_buffer:
       self.test_buffer = SBT.Buffer()
       vim.command("setlocal buftype=nofile")
@@ -133,6 +138,12 @@ def sbt_init():
   global sbt
   if not sbt:
     sbt = SBT()
+
+def sbt_close():
+  global sbt
+  if sbt:
+    sbt.close()
+    sbt = None
 
 def sbt_compile():
   global sbt
