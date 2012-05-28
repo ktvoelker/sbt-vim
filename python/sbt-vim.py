@@ -31,7 +31,8 @@ class SBT(object):
       vim.command("setlocal noswapfile")
       vim.command("setlocal nobuflisted")
       # TODO go back to the last buffer that was open
-      vim.command("bprevious")
+      if self.bufnum > 1:
+        vim.command("bprevious")
 
   def close(self):
     if self.bufnum is not None:
@@ -71,6 +72,20 @@ class SBT(object):
       self.buffer[0] = lines[0]
       self.buffer.append(lines[1:])
       vim.command("cbuffer %d" % self.bufnum)
+    else:
+      print("No errors.")
+
+  def test(self):
+    self._init_buffer()
+    del self.buffer[:]
+    # TODO support the case where the tests compile but fail
+    lines = list(self._filter_errors(self.command("test")))
+    if len(lines) > 0:
+      self.buffer[0] = lines[0]
+      self.buffer.append(lines[1:])
+      vim.command("cbuffer %d" % self.bufnum)
+    else:
+      print("No errors.")
 
 sbt = None
 
@@ -83,4 +98,9 @@ def sbt_compile():
   global sbt
   sbt_init()
   sbt.compile()
+
+def sbt_test():
+  global sbt
+  sbt_init()
+  sbt.test()
 
