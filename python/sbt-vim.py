@@ -52,8 +52,10 @@ class SBT(object):
       del self.buffer[:]
 
     def set_contents(self, lines):
-      self.buffer[0] = lines[0]
-      self.buffer.append(lines[1:])
+      if len(lines) > 0:
+        self.buffer[0] = lines[0]
+        if len(lines) > 1:
+          self.buffer.append(lines[1:])
 
     def go_previous(self):
       # TODO go back to the last buffer that was open
