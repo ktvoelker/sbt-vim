@@ -118,7 +118,7 @@ class SBT(object):
 
   def _set_compile_errors(self, errors):
     self.buffer.set_contents(errors)
-    vim.command("cbuffer %d" % self.bufnum)
+    vim.command("cbuffer %d" % self.buffer.bufnum)
 
   def compile(self):
     self._init_buffer()
