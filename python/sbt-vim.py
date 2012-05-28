@@ -114,7 +114,7 @@ class SBT(object):
   def _filter_files(self, lines):
     for line in lines:
       if line.startswith("/"):
-        yield line[1:]
+        yield line
 
   def _set_compile_errors(self, errors):
     self.buffer.set_contents(errors)
