@@ -26,6 +26,8 @@ Otherwise, you will need to copy some files:
 Usage
 -----
 
+To compile:
+
     :sbtc
 
 This puts you into Vim's
