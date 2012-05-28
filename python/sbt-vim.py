@@ -8,52 +8,63 @@ class SBT(object):
 
   def __init__(self):
     self.buffer = None
-    self.bufnum = None
     self.test_buffer = None
-    self.test_bufnum = None
     self.proc = subprocess.Popen(
         ["sbt", "-Dsbt.log.noformat=true"],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         close_fds=True)
 
-  # TODO move the huge amount of per-buffer logic into an inner Buffer class
-  def _new_buffer(self):
-    vim.command("enew")
-    for i in xrange(0, len(vim.buffers)):
-      if vim.buffers[i] == vim.current.buffer:
-        bufnum = i + 1
-        break
-    if bufnum is None:
-      raise RuntimeError("Couldn't find buffer in buffers array.")
-    return (bufnum, vim.current.buffer)
+  class Buffer(object):
 
-  def _delete_buffer(self, bufnum, buffer):
-    if bufnum is not None and buffer is not None:
-      if vim.buffers[bufnum] is buffer:
-        vim.command("bdelete " + bufnum)
+    def __init__(self):
+      vim.command("enew")
+      for i in xrange(0, len(vim.buffers)):
+        if vim.buffers[i] == vim.current.buffer:
+          self.bufnum = i + 1
+          break
+      if self.bufnum is None:
+        raise RuntimeError("Couldn't find buffer in buffers array.")
+      self.buffer = vim.current.buffer
 
-  def _init_buffer(self):
-    if not self.buffer:
-      (self.bufnum, self.buffer) = self._new_buffer()
-      vim.command("setlocal buftype=nofile")
-      vim.command("setlocal bufhidden=hide")
-      vim.command("setlocal noswapfile")
-      vim.command("setlocal nobuflisted")
+    def delete(self):
+      if self.bufnum is not None and self.buffer is not None:
+        if vim.buffers[self.bufnum] is self.buffer:
+          vim.command("bdelete " + self.bufnum)
+
+    def clear(self):
+      del self.buffer[:]
+
+    def set_contents(self, lines):
+      self.buffer[0] = lines[0]
+      self.buffer.append(lines[1:])
+
+    def go_previous(self):
       # TODO go back to the last buffer that was open
       if self.bufnum > 1:
         vim.command("bprevious")
 
+  def _init_buffer(self):
+    if not self.buffer:
+      self.buffer = SBT.Buffer()
+      vim.command("setlocal buftype=nofile")
+      vim.command("setlocal bufhidden=hide")
+      vim.command("setlocal noswapfile")
+      vim.command("setlocal nobuflisted")
+      self.buffer.go_previous()
+
   def _init_test_buffer(self):
     if not self.test_buffer:
-      (self.test_bufnum, self.test_buffer) = self._new_buffer()
+      self.test_buffer = SBT.Buffer()
       vim.command("setlocal buftype=nofile")
       vim.command("setlocal noswapfile")
       # TODO name the buffer
 
   def close(self):
-    self._delete_buffer(self, self.bufnum, self.buffer)
-    self._delete_buffer(self, self.test_bufnum, self.test_buffer)
+    if self.buffer:
+      self.buffer.delete()
+    if self.test_buffer:
+      self.test_buffer.delete()
     self.proc.stdin.close()
     self.proc.wait()
 
@@ -86,20 +97,13 @@ class SBT(object):
       if line.startswith("/"):
         yield line[1:]
 
-  def _clear_buffer(self, buffer):
-    del buffer[:]
-
-  def _set_buffer_contents(self, buffer, lines):
-    buffer[0] = lines[0]
-    buffer.append(lines[1:])
-
   def _set_compile_errors(self, errors):
-    self._set_buffer_contents(self.buffer, errors)
+    self.buffer.set_contents(errors)
     vim.command("cbuffer %d" % self.bufnum)
 
   def compile(self):
     self._init_buffer()
-    self._clear_buffer(self.buffer)
+    self.buffer.clear()
     lines = list(self._filter_files(self._filter_errors(self.command("compile"))))
     if len(lines) > 0:
       self._set_compile_errors(lines)
@@ -108,7 +112,7 @@ class SBT(object):
 
   def test(self):
     self._init_buffer()
-    self._clear_buffer(self.buffer)
+    self.buffer.clear()
     lines = list(self._filter_errors(self.command("test")))
     if len(lines) > 0:
       files = list(self._filter_files(lines))
@@ -117,8 +121,8 @@ class SBT(object):
       else:
         # TODO print the number of tests with each status
         self._init_test_buffer()
-        self._clear_buffer(self.test_buffer)
-        self._set_buffer_contents(self.test_buffer, lines)
+        self.test_buffer.clear()
+        self.test_buffer.set_contents(lines)
     else:
       # TODO print the number of tests with each status
       print("No errors.")
