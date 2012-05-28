@@ -7,6 +7,12 @@ be used from within [Vim](http://www.vim.org/).
 
 Please [email me](mailto:ktvoelker@gmail.com) if you have questions.
 
+Dependencies
+------------
+
+* Vim, compiled with Python support (check with `vim --version | grep +python`)
+* SBT on your `$PATH` (check with `which sbt`)
+
 Installation
 ------------
 
