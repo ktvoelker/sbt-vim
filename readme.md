@@ -1,4 +1,3 @@
-
 SBT-Vim Bridge
 ==============
 
@@ -12,6 +11,13 @@ Dependencies
 
 * Vim, compiled with Python support (check with `vim --version | grep +python`)
 * SBT on your `$PATH` (check with `which sbt`)
+
+Mac Homebrew users: if your Vim was built against Homebrew's Python, it probably won't work. To fix this:
+
+    brew unlink python
+    brew uninstall vim
+    brew install homebrew/dupes/vim
+    brew link python
 
 Installation
 ------------
