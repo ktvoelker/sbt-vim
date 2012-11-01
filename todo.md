@@ -6,3 +6,5 @@ To-Do
 
 * Optionally run sbt from the directory which contains build.sbt
 
+* Optionally include warnings
+
