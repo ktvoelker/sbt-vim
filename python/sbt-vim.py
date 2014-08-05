@@ -35,31 +35,25 @@ class SBT(object):
 
     def __init__(self):
       vim.command("enew")
-      for i in xrange(0, len(vim.buffers)):
-        if vim.buffers[i] == vim.current.buffer:
-          self.bufnum = i + 1
-          break
-      if self.bufnum is None:
-        raise RuntimeError("Couldn't find buffer in buffers array.")
       self.buffer = vim.current.buffer
 
     def delete(self):
-      if self.bufnum is not None and self.buffer is not None:
-        if vim.buffers[self.bufnum] is self.buffer:
-          vim.command("bdelete " + self.bufnum)
+      if self.buffer is not None:
+        vim.command("bdelete " + self.buffer.number)
 
     def clear(self):
       del self.buffer[:]
 
-    def set_contents(self, lines):
+    def set_contents(self, lines, quickfix=False):
       if len(lines) > 0:
         self.buffer[0] = lines[0]
-        if len(lines) > 1:
-          self.buffer.append(lines[1:])
+        self.buffer.append(lines[1:])
+        if quickfix:
+          vim.command("cbuffer %d" % self.buffer.number)
 
     def go_previous(self):
       # TODO go back to the last buffer that was open
-      if self.bufnum > 1:
+      if self.buffer.number > 1:
         vim.command("bprevious")
 
   def _init_buffer(self):
@@ -119,8 +113,7 @@ class SBT(object):
         yield line
 
   def _set_compile_errors(self, errors):
-    self.buffer.set_contents(errors)
-    vim.command("cbuffer %d" % self.buffer.bufnum)
+    self.buffer.set_contents(errors, quickfix=True)
 
   def compile(self):
     self._init_buffer()
