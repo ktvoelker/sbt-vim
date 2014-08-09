@@ -4,7 +4,7 @@ SBT-Vim Bridge
 This is a Vim plugin that allows [sbt](https://github.com/harrah/xsbt/wiki) to
 be used from within [Vim](http://www.vim.org/).
 
-Please [email me](mailto:ktvoelker@gmail.com) if you have questions.
+Please [email me](mailto:sbt-vim@karlv.net) if you have questions.
 
 Dependencies
 ------------

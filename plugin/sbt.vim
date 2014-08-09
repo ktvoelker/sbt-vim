@@ -1,4 +1,4 @@
-" Copyright 2012 Karl Voelker <ktvoelker@gmail.com>
+" Copyright 2012-2014 Karl Voelker <sbt-vim@karlv.net>
 "
 " This file is part of SBT-Vim.
 " 
