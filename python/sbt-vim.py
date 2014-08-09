@@ -42,7 +42,17 @@ class SBT(object):
         vim.command("bdelete " + self.buffer.number)
 
     def clear(self):
-      del self.buffer[:]
+      # There is a bug in vim 7.4, due to which this function was producing
+      # an internal vim error. The problem seems to occur when the current
+      # buffer is not our quickfix buffer, and the cursor position in the
+      # current buffer is not a valid index into our quickfix buffer.
+      prev_buffer = None
+      if vim.current.buffer is not self.buffer:
+          prev_buffer = vim.current.buffer
+          vim.command("buffer %d" % self.buffer.number)
+      del self.buffer[0:len(self.buffer)-1]
+      if prev_buffer is not None:
+          vim.command("buffer %d" % prev_buffer.number)
 
     def set_contents(self, lines, quickfix=False):
       if len(lines) > 0:
