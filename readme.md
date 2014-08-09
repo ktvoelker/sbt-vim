@@ -23,9 +23,9 @@ Installation
 ------------
 
 If you use [Pathogen](https://github.com/tpope/vim-pathogen), just clone this
-repository in your `bundles` directory:
+repository in your `bundle` directory:
 
-    git clone https://ktvoelker@github.com/ktvoelker/sbt-vim.git ~/.vim/bundles/sbt-vim
+    git clone https://ktvoelker@github.com/ktvoelker/sbt-vim.git ~/.vim/bundle/sbt-vim
 
 Otherwise, you will need to copy some files:
 
