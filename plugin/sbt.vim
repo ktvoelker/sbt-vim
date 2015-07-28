@@ -16,7 +16,7 @@
 " along with SBT-Vim.  If not, see <http://www.gnu.org/licenses/>.
 
 " TODO warn the user (and do nothing else) if Python is not supported
-let s:pysrc = expand("<sfile>:h") . "/../python/sbt-vim.py"
+let s:pysrc = fnameescape(expand("<sfile>:h") . "/../python/sbt-vim.py")
 exec "pyfile" s:pysrc
 
 cab sbtc py sbt_compile()
