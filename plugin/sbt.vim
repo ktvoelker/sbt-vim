@@ -15,7 +15,6 @@
 " You should have received a copy of the GNU General Public License
 " along with SBT-Vim.  If not, see <http://www.gnu.org/licenses/>.
 
-" TODO warn the user (and do nothing else) if Python is not supported
 let s:pysrc = expand("<sfile>:h") . "/../python/sbt-vim.py"
 if has('python')
   exec "pyfile" s:pysrc
