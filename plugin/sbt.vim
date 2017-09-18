@@ -17,8 +17,15 @@
 
 " TODO warn the user (and do nothing else) if Python is not supported
 let s:pysrc = expand("<sfile>:h") . "/../python/sbt-vim.py"
-exec "pyfile" s:pysrc
-
-cab sbtc py sbt_compile()
-cab sbtt py sbt_test()
+if has('python')
+  exec "pyfile" s:pysrc
+  cab sbtc py sbt_compile()
+  cab sbtt py sbt_test()
+elif has('python3')
+  exec "py3file" s:pysrc
+  cab sbtc py3 sbt_compile()
+  cab sbtt py3 sbt_test()
+else
+  echoe 'Python support is required.'
+endif
 
