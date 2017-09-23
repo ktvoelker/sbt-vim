@@ -20,11 +20,11 @@ if has('python')
   exec "pyfile" s:pysrc
   cab sbtc py sbt_compile()
   cab sbtt py sbt_test()
-elif has('python3')
+elseif has('python3')
   exec "py3file" s:pysrc
   cab sbtc py3 sbt_compile()
   cab sbtt py3 sbt_test()
 else
-  echoe 'Python support is required.'
+  echoe 'Python support is required for sbt-vim.'
 endif
 
