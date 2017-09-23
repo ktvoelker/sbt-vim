@@ -95,19 +95,23 @@ class SBT(object):
 
   def command(self, cmd):
     to = self.proc.stdin
+    send = lambda s: to.write(s.encode('utf-8'))
     fr = self.proc.stdout
+    recv = lambda : fr.readline().decode('utf-8')
+
     marker = str(uuid.uuid4())
-    to.write(cmd)
-    to.write("\n")
-    to.write("eval print(\"%s\\n\")\n" % marker)
-    fr.readline()
-    line = fr.readline()
-    while line:
+
+    send(cmd + '\n')
+    send('eval print("{:s}\\n")\n'.format(marker))
+    to.flush()
+
+    while True:
+      line = recv()
+      if not line:
+        continue
       if line.strip() == marker:
-        fr.readline()
         break
       yield line
-      line = fr.readline()
 
   ERROR_TAG = "[error] "
   ERROR_TAG_LEN = len(ERROR_TAG)
