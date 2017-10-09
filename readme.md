@@ -9,7 +9,7 @@ Please [email me](mailto:sbt-vim@karlv.net) if you have questions.
 Dependencies
 ------------
 
-* Vim, compiled with Python support (check with `vim --version | grep +python`)
+* Vim, compiled with support for Python 2 or 3 (check with `vim --version | grep -F +python`)
 * SBT on your `$PATH` (check with `which sbt`)
 
 Mac Homebrew users: if your Vim was built against Homebrew's Python, it probably won't work. To fix this:
