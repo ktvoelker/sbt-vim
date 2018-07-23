@@ -33,15 +33,30 @@ class SBT(object):
 
   class Buffer(object):
 
-    def __init__(self):
-      vim.command("enew")
+    def __init__(self, name="def"):
+      full_name = "sbt-vim-%s" % name
+      try:
+        # check if our buffer exists already and reuse it
+        vim.command("buffer %s" % full_name)
+      except vim.error:
+        # we need a new one
+        vim.command("enew")
+        vim.command("file %s" % full_name)
       self.buffer = vim.current.buffer
+      # track if we may want to close quickfix window
+      self.quickfix = False
 
     def delete(self):
       if self.buffer is not None:
-        vim.command("bdelete " + self.buffer.number)
+        vim.command("bdelete " + self.buffer.name)
 
     def clear(self):
+      # close quickfix if we opened it
+      if self.quickfix:
+          vim.command("cclose")
+          vim.command("cexpr []")
+          self.quickfix = False
+
       # There is a bug in vim 7.4, due to which this function was producing
       # an internal vim error. The problem seems to occur when the current
       # buffer is not our quickfix buffer, and the cursor position in the
@@ -49,10 +64,10 @@ class SBT(object):
       prev_buffer = None
       if vim.current.buffer is not self.buffer:
           prev_buffer = vim.current.buffer
-          vim.command("buffer %d" % self.buffer.number)
+          vim.command("buffer %s" % self.buffer.name)
       del self.buffer[0:len(self.buffer)-1]
       if prev_buffer is not None:
-          vim.command("buffer %d" % prev_buffer.number)
+          vim.command("buffer %s" % prev_buffer.name)
 
     def set_contents(self, lines, quickfix=False):
       if len(lines) > 0:
@@ -60,30 +75,31 @@ class SBT(object):
         self.buffer.append(lines[1:])
         if quickfix:
           vim.command("cbuffer %d" % self.buffer.number)
-
-    def go_previous(self):
-      # TODO go back to the last buffer that was open
-      if self.buffer.number > 1:
-        vim.command("bprevious")
+          # open the quickfix and remember to close it later
+          vim.command("copen")
+          self.quickfix = True
 
   def _init_buffer(self):
-    # TODO figure out if the user deleted this buffer
     if not self.buffer:
+      # save current buffer name to go back to it
+      prev = vim.current.buffer
       self.buffer = SBT.Buffer()
       vim.command("setlocal buftype=nofile")
       vim.command("setlocal bufhidden=hide")
       vim.command("setlocal noswapfile")
       vim.command("setlocal nobuflisted")
-      # TODO name the buffer
-      self.buffer.go_previous()
+      # go back to the buffer
+      vim.command("buffer %s" % prev.name)
 
   def _init_test_buffer(self):
-    # TODO figure out if the user deleted this buffer
     if not self.test_buffer:
-      self.test_buffer = SBT.Buffer()
+      # save current buffer name to go back to it
+      prev = vim.current.buffer
+      self.test_buffer = SBT.Buffer("test")
       vim.command("setlocal buftype=nofile")
       vim.command("setlocal noswapfile")
-      # TODO name the buffer
+      # go back to the buffer
+      vim.command("buffer %s" % prev.name)
 
   def close(self):
     if self.buffer:
