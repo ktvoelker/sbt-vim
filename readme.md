@@ -54,7 +54,7 @@ You can also run your tests:
     :sbtt
 
 If there are any test failures, you will be shown the list of failures in a new
-buffer. *Do not delete this buffer.* The code is new and can't handle that yet.
+buffer named `sbt-vim-test` that you can delete any time.
 
 Advanced Usage
 --------------
