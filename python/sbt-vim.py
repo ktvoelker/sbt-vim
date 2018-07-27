@@ -22,14 +22,17 @@ import vim
 
 class SBT(object):
 
-  def __init__(self):
-    self.buffer = None
-    self.test_buffer = None
-    self.proc = subprocess.Popen(
+  def _open_proc(self):
+    return subprocess.Popen(
         ["sbt", "-Dsbt.log.noformat=true"],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         close_fds=True)
+
+  def __init__(self):
+    self.buffer = None
+    self.test_buffer = None
+    self.proc = self._open_proc()
 
   class Buffer(object):
 
@@ -109,7 +112,7 @@ class SBT(object):
     self.proc.stdin.close()
     self.proc.wait()
 
-  def command(self, cmd):
+  def command(self, cmd, retry=True):
     to = self.proc.stdin
     send = lambda s: to.write(s.encode('utf-8'))
     fr = self.proc.stdout
@@ -119,7 +122,15 @@ class SBT(object):
 
     send(cmd + '\n')
     send('eval print("{:s}\\n")\n'.format(marker))
-    to.flush()
+    try:
+      to.flush()
+    except BrokenPipeError:
+      if not retry:
+          print("Failed to communicate with sbt")
+          raise
+      self.proc = self._open_proc()
+      self.command(cmd, retry=False)
+      return
 
     while True:
       line = recv()
